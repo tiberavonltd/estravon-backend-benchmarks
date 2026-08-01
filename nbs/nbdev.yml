@@ -1,0 +1,14 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "estravon-backend-benchmarks"
+  site-url: "https://tiberavonltd.github.io/estravon-backend-benchmarks"
+  description: "Apples-to-apples PDF-to-Markdown engine comparison for estravon-backend"
+  repo-branch: main
+  repo-url: "https://github.com/tiberavonltd/estravon-backend-benchmarks"
+
+format-links:
+  - html
+  - format: commonmark
+    text: Markdown
