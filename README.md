@@ -43,10 +43,16 @@ subprocess’s own working directory ends up being.
 ## Install
 
 ``` python
-!pip install git+https://github.com/tiberavonltd/estravon-backend-benchmarks.git
+!pip install estravon-backend-benchmarks
 ```
 
-No PyPI package yet – the git install above is the current path (`pip install estravon-backend-benchmarks` will *not* work). Contributing or editing a notebook under `nbs/`? Clone the repo and install in dev mode instead:
+Also installable via git, e.g. for the latest unreleased commit on `main`, or for contributing (editing a notebook under `nbs/`):
+
+``` sh
+pip install git+https://github.com/tiberavonltd/estravon-backend-benchmarks.git
+```
+
+To contribute, clone and install in dev mode instead:
 
 ``` sh
 git clone https://github.com/tiberavonltd/estravon-backend-benchmarks.git
@@ -192,10 +198,67 @@ reloaded = ComparisonResultList.load("runs/mineru_vs_mistral")
 print(reloaded.to_markdown_table())
 ```
 
-## Scoring (optional, not required to be useful)
+## Worked example: diff analysis between Mistral and Datalab on Artusi’s first 4 pages
 
-`compare()` + `to_markdown_table()` – outputs, time, and cost – is the whole
-value proposition and needs zero ground truth. Scoring against a reference
-(TEDS for tables, CER/edit-distance for text, formula metrics) is optional
-upside in `estravon_bench.score` for contributors who want it; it is not
-required to get value from this package.
+Good test case — the Artusi title page is unusually hard (ornamental 1891 display type, blackletter-ish capitals, printer’s devices), so it stresses glyph recognition far more than body text would. Here’s what we see in the diff, grouped by kind of difference.
+
+### Structural / heading policy
+
+Mistral promotes almost anything visually large to `#`: “L’ARTE DI MANGIAR BENE”, “MANUALE PRATICO PER LE FAMIGLIE” and even “PROPRIETÀ LETTERARIA” all become H1. Datalab infers a hierarchy instead — `##` for the subtitle, plain paragraph for “MANUALE PRATICO…”. The stats confirm it: 8 headings vs 4. Mistral is mapping *type size* to heading level; Datalab is mapping *document role*. For Zotero/RAG chunking that matters a lot — a document where every other line is H1 gives you useless section boundaries.
+
+### Line-break fidelity
+
+Datalab emits trailing double-spaces to preserve the couplets:
+
+``` markdown
+Un pasto buono ed un mezzano  
+Mantengon l'uomo sano.
+```
+
+Mistral uses bare newlines, so those verse pairs collapse into one line when rendered. Datalab also captures the italics (`*Prima digestio fit in ore.*`) that Mistral drops, and escapes the decorative asterisks (`Igiene \* Economia`) so they don’t accidentally become emphasis.
+
+### OCR accuracy — the interesting part
+
+they fail in different ways:
+
+| originale            | Mistral     | Datalab      |
+|----------------------|-------------|--------------|
+| Igiene               | “Agiene” X  | “Igiene” V   |
+| Dai due regni        | “Dal due” X | “Dai due” V  |
+| …sano e lesto        | “lesto” V   | “lieto” X    |
+| Pei tipi di S. Landi | “PEI TIPI”  | “PER TIPI” X |
+
+Mistral’s errors are letterform confusions (I -\> A, i -\> l) — classic optical failures on ornamental capitals. Datalab’s errors are language-model normalisations: “Pei” is archaic Italian printing idiom, so it “corrected” it to the more frequent “PER”; likewise “lesto”→“lieto”.
+
+That distinction has real consequences. Optical errors look wrong and get caught. LM-normalisation errors look right and slip through. Worth flagging in a benchmark.
+
+Note also that both engines are internally inconsistent: the same couplet appears twice in these 4 pages, and Mistral writes “Dal” on p1 but “Dai” on p3, while Datalab writes “lieto” then “lesto”. So a same-document self-consistency check would be a cheap and quite powerful quality metric to add.
+
+### Images — the biggest practical difference
+
+Mistral: 3 images, generic alt (`![img-0.jpeg](...)`). Datalab: 2 images, VLM-generated descriptive alt.
+
+Two problems on the Datalab side:
+
+1.  It dropped an image Mistral caught (the device between “IN FIRENZE” and the printer’s name) — 2 vs 3.
+2.  It duplicates the description into the body text, sometimes twice:
+
+``` markdown
+![Decorative flourish or ornament.](bench_img_002.jpg)
+
+A decorative flourish or ornament consisting of a horizontal line with...
+
+Decorative flourish or ornament.
+```
+
+That’s leaking generated English prose into an Italian document’s text stream. The contamination shows up directly in the stats — Datalab’s top keywords include `lines`, `decorative`, `flourish`, `ornament`, none of which appear in Artusi. It also inflates word_count 171→227 and fk_grade 10.3→12.6.
+
+So the stats block is **not currently comparable across engines**, because one of them is measuring its own captions. If those numbers are meant to drive quality scoring, either strip alt-text before computing them, or compute them on text-only and figure-text separately.
+
+### Layout artifacts
+
+Datalab inserts `---` rules where the original has printed rules and page divisions; Mistral ignores them. Neither is wrong — it depends on whether physical layout or logical content only is wanted.
+
+### Summary judgement:
+
+Datalab gives richer, better-structured markdown (real hierarchy, breaks, italics, figure descriptions) at the cost of speed, one missed figure, text-stream pollution, and a tendency to silently modernise archaic wording. Mistral is faster and more literal, but flattens structure and needs post-processing for headings.
