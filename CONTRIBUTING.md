@@ -23,20 +23,23 @@ rather than anything about `estravon-backend`'s own internals.
 
 This package is authored with [nbdev](https://nbdev.fast.ai/) — the
 notebooks under `nbs/` are the source of truth; `estravon_bench/*.py` is
-generated from them via `nbdev_export`, not hand-edited. If you're new to
+generated from them via `nbdev-export`, not hand-edited. If you're new to
 nbdev's workflow (the `#| export`/`#| hide` cell directives, the
-edit-notebook-then-`nbdev_export` loop), read nbdev's own docs first — the
+edit-notebook-then-`nbdev-export` loop), read nbdev's own docs first — the
 audience for this package is exactly the crowd that already values that
 workflow, so we lean into it rather than working around it.
 
 ```bash
 pip install -e ".[dev]"
-nbdev_install_hooks   # keeps notebook diffs clean (strips outputs on commit)
+nbdev-install-hooks   # keeps notebook diffs clean (strips outputs on commit)
 
 # after editing a notebook under nbs/:
-nbdev_export           # regenerate estravon_bench/*.py
-nbdev_test              # run every notebook's cells as tests
+nbdev-export           # regenerate estravon_bench/*.py
+nbdev-test              # run every notebook's cells as tests
 ```
+
+nbdev 3.x only ships hyphenated console scripts (`nbdev-export`, not
+`nbdev_export`) — if a command isn't found, that's the usual reason.
 
 ## Scope reminder
 

@@ -17,6 +17,9 @@ classifiers = [
 ]
 dependencies = ["httpx", "fastdownload"]
 
+[project.optional-dependencies]
+dev = ["nbdev"]
+
 [project.urls]
 Repository = "https://github.com/tiberavonltd/estravon-backend-benchmarks"
 Documentation = "https://tiberavonltd.github.io/estravon-backend-benchmarks/"
