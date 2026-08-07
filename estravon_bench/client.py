@@ -20,7 +20,7 @@ import httpx
 # %% auto #0
 __all__ = ['Client', 'LocalEngineProcess']
 
-# %% ../nbs/01_client.ipynb #6946ee82
+# %% ../nbs/01_client.ipynb #e45d1f66
 class Client:
     """Talks to ONE running estravon-backend instance over HTTP.
 
@@ -124,6 +124,26 @@ class Client:
         out = []
         for f in result.get("files", []):
             out.append({"label": f["label"], "markdown": self.fetch_text(f["md_url"])})
+        return out
+
+    def fetch_bytes(self, path: str) -> bytes:
+        """GET a /files/{job_id}/{filename} path, returning raw bytes -- the
+        binary counterpart to fetch_text(), same two-step-fetch shape."""
+        r = self._http.get(f"{self.base_url}{path}", headers=self._headers())
+        r.raise_for_status()
+        return r.content
+
+    def fetch_images(self, result: dict) -> dict[str, bytes]:
+        """Fetch every image for every file in a done `/process` result.
+
+        Returns {filename: bytes, ...} -- flattened across all files/chunks,
+        keyed by each image's own filename (the last path segment of its
+        URL), mirroring `estravon.backends.ExtractionResult.images`' shape.
+        """
+        out: dict[str, bytes] = {}
+        for f in result.get("files", []):
+            for url in f.get("image_urls", []):
+                out[Path(url).name] = self.fetch_bytes(url)
         return out
 
     def close(self) -> None:

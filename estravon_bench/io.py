@@ -37,8 +37,8 @@ def get_artusi(scanned: bool = False) -> Path:
 # %% auto #0
 __all__ = ['get_artusi', 'ComparisonResult']
 
-# %% ../nbs/00_input_and_output_def.ipynb #558633bb
-from dataclasses import dataclass
+# %% ../nbs/00_input_and_output_def.ipynb #ef120368
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -50,10 +50,17 @@ class ComparisonResult:
     figure. ``error`` is set (and every other field left at its default)
     when this engine failed or was unreachable -- compare() never raises
     on a single engine's failure, it records a row instead.
+
+    ``images``: filename -> raw bytes, mirroring
+    ``estravon.backends.ExtractionResult.images``' shape. Empty dict (not
+    ``None``) when an engine produced no images or extraction failed --
+    consistent with ``markdown``/``error`` being the actual signal for
+    failure, not an empty ``images`` dict.
     """
 
     engine: str
     markdown: str | None = None
+    images: dict[str, bytes] = field(default_factory=dict)
     predict_time_s: float | None = None
     cost_usd: float | None = None
     local: bool = False

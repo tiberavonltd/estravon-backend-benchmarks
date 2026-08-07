@@ -141,6 +141,57 @@ apples-to-apples – not a production layer, and not a leaderboard. It
 compares *your* PDF on *your* configured engines; it makes no claim about
 which engine is best in general.
 
+## Images
+
+Engines that extract images (Datalab and Mistral, real-verified; any future engine automatically once it returns `image_urls`) have them fetched for you – `result.images` is a `{filename: bytes}` dict per engine, populated by `compare()` the same way `result.markdown` is. `to_markdown_table()`’s `images` column shows the count per engine at a glance.
+
+No automated image comparison here – engines encode/crop/caption images differently even for “the same” figure, so this package limits itself to presence/count and letting you look:
+
+``` python
+from IPython.display import Image
+
+row = result.get("mistral")
+for filename, data in row.images.items():
+    print(filename, f"{len(data)} bytes")
+    display(Image(data=data))
+```
+
+## Combining results from separate `compare()` calls
+
+Running one engine at a time (different session, different machine, resource constraints) instead of passing `engines=[...]` all at once? Merge the results back into one `ComparisonResultList` afterwards – `+` and `.merge()` both return a new list without touching the originals; `.extend()` mutates the first list in place if you’d rather accumulate into one object as you go:
+
+``` python
+from estravon_bench.compare import compare
+from estravon_bench.io import get_artusi
+from estravon_bench.report import ComparisonResultList
+
+pdf = str(get_artusi())
+mineru_result  = compare(pdf, "1-4", engines=["mineru"])
+mistral_result = compare(pdf, "1-4", engines=["mistral"])
+
+combined = mineru_result + mistral_result                      # new list, both inputs untouched
+# equivalent, and reads better for more than two lists:
+combined = ComparisonResultList.merge(mineru_result, mistral_result)
+
+mineru_result.extend(mistral_result)   # or: mutate mineru_result in place instead
+
+print(combined.to_markdown_table())
+```
+
+## Saving and loading a comparison run
+
+`ComparisonResultList.save(dir_path)` writes the whole list to disk as plain files – `manifest.json` plus one subdirectory per engine holding `result.md` and an `images/` folder – not a database or a binary format, so any file browser, `git diff`, or image viewer can inspect a saved run directly. `ComparisonResultList.load(dir_path)` reads it back into real `ComparisonResult` objects, markdown/images/metadata all restored exactly:
+
+``` python
+from estravon_bench.report import ComparisonResultList
+
+result.save("runs/mineru_vs_mistral")
+
+# ...later, or in a different session:
+reloaded = ComparisonResultList.load("runs/mineru_vs_mistral")
+print(reloaded.to_markdown_table())
+```
+
 ## Scoring (optional, not required to be useful)
 
 `compare()` + `to_markdown_table()` – outputs, time, and cost – is the whole

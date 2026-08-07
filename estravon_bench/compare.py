@@ -18,7 +18,7 @@ _DEFAULT_BASE_PORT = 7860
 # %% auto #0
 __all__ = ['compare']
 
-# %% ../nbs/03_compare.ipynb #e34c4680
+# %% ../nbs/03_compare.ipynb #1b09cde4
 def _run_one(
     client: Client, engine: str, pdf_path: str, section_name: str, page_range: str,
     chunk_size: int, mode: str, force_ocr: bool, max_wait_s: float,
@@ -35,8 +35,9 @@ def _run_one(
                                      error=result.get("error") or f"status={result.get('status')}")
         parts = client.fetch_markdown(result)
         markdown = "\n\n".join(p["markdown"] for p in parts)
+        images = client.fetch_images(result)
         return ComparisonResult(
-            engine=engine, markdown=markdown,
+            engine=engine, markdown=markdown, images=images,
             predict_time_s=result.get("total_predict_time_s"),
             cost_usd=result.get("total_cost_usd"),
             local=bool(result.get("local", False)),
