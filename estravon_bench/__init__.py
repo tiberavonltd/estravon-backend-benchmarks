@@ -7,4 +7,4 @@ Modules:
 - `estravon_bench.overhead`: Separating fixed per-request overhead from real per-page processing time, by measuring at several page counts instead of just one.
 - `estravon_bench.saas_probe`: Free-by-default reachability/quota probes for Mistral, Datalab, and Replicate -- for answering "is it them or is it me" before trusting a `compare()` run against an engine that's behaving strangely."""
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"

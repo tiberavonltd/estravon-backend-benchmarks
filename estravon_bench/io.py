@@ -37,7 +37,7 @@ def get_artusi(scanned: bool = False) -> Path:
 # %% auto #0
 __all__ = ['get_artusi', 'ComparisonResult']
 
-# %% ../nbs/00_input_and_output_def.ipynb #ef120368
+# %% ../nbs/00_input_and_output_def.ipynb #5c37dada
 from dataclasses import dataclass, field
 
 

@@ -18,7 +18,7 @@ _DEFAULT_BASE_PORT = 7860
 # %% auto #0
 __all__ = ['compare']
 
-# %% ../nbs/03_compare.ipynb #1b09cde4
+# %% ../nbs/03_compare.ipynb #9b8a0e86
 def _run_one(
     client: Client, engine: str, pdf_path: str, section_name: str, page_range: str,
     chunk_size: int, mode: str, force_ocr: bool, max_wait_s: float,
