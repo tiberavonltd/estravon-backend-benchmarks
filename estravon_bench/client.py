@@ -20,7 +20,7 @@ import httpx
 # %% auto #0
 __all__ = ['Client', 'LocalEngineProcess']
 
-# %% ../nbs/01_client.ipynb #84b92dd4
+# %% ../nbs/01_client.ipynb #fadde980
 class Client:
     """Talks to ONE running estravon-backend instance over HTTP.
 
